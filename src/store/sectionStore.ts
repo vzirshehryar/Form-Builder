@@ -10,7 +10,7 @@ interface SectionState {
   //   getChildSections: (parentId: string) => SectionType[];
 }
 
-export const useSectionStore = create<SectionState>((set, get) => ({
+export const useSectionStore = create<SectionState>((set) => ({
   sections: [],
   addSection: (section) =>
     set((state) => ({

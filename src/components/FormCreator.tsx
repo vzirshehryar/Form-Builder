@@ -1,9 +1,3 @@
-import { FormEventHandler, useState } from "react";
-import { Input } from "./ui/input";
-import { SectionType } from "@/lib/types";
-import { useSectionStore } from "@/store/sectionStore";
-import AddSectionModal from "./AddSectionModal";
-import SectionSelectorForm from "./SectionSelectorForm";
 import InputForm from "./InputForm";
 
 export default function FormCreator() {

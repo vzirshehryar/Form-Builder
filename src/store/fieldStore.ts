@@ -10,7 +10,7 @@ type FieldStoreType = {
   //   getChildSections: (parentId: string) => SectionType[];
 };
 
-export const useFieldStore = create<FieldStoreType>((set, get) => ({
+export const useFieldStore = create<FieldStoreType>((set) => ({
   fields: [],
   addField: (field) =>
     set((state) => ({
