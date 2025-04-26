@@ -8,7 +8,7 @@ import {
 import { FieldType } from "@/lib/types";
 import { useEffect, useId, useState } from "react";
 import { Input } from "./ui/input";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
@@ -26,11 +26,13 @@ export default function InputField({
 }: {
   field: FieldType;
   form: any;
-  onFormChange(key: string, value: string): void;
+  onFormChange(key: string, value: string | string[]): void;
 }) {
   const id = useId();
   const [date, setDate] = useState<Date>();
   const [select, setSelect] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
 
   useEffect(() => {
     if (field.optionsForSelect && field.optionsForSelect.length > 0)
@@ -123,6 +125,71 @@ export default function InputField({
     );
   }
 
+  if (field.type === "File Upload") {
+    return (
+      <div>
+        <p className="mb-1 font-medium">
+          <label htmlFor={id} className="cursor-pointer">
+            {field.name}
+          </label>
+        </p>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Input
+              id={id}
+              type="file"
+              className="w-full"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setSelectedFile(file);
+                  onFormChange(field.name, file.name);
+                }
+              }}
+              accept={field.acceptedFileTypes?.join(",")}
+              required={field.required}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit"
+              onClick={() => {
+                const input = document.getElementById(id) as HTMLInputElement;
+                input?.click();
+              }}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Choose File
+            </Button>
+          </div>
+          {selectedFile && (
+            <div className="flex items-center gap-2 p-2 bg-gray-100 rounded">
+              <p className="text-sm">{selectedFile.name}</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedFile(null);
+                  onFormChange(field.name, "");
+                  const input = document.getElementById(id) as HTMLInputElement;
+                  if (input) input.value = "";
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
+          {field.acceptedFileTypes && field.acceptedFileTypes.length > 0 && (
+            <p className="text-sm text-gray-500">
+              Accepted file types: {field.acceptedFileTypes.join(", ")}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (field.type === "Date picker") {
     return (
       <div className="relative">
@@ -163,6 +230,46 @@ export default function InputField({
           required={date ? false : true}
         />
         {/* {fieldError && <ErrorText text={fieldError} />} */}
+      </div>
+    );
+  }
+
+  if (field.type === "Check Box") {
+    const onCheckBoxChanged = (name: string, val: string) => {
+      if (selectedFields.includes(val)) {
+        setSelectedFields((prev) => prev.filter((v) => v !== val));
+        onFormChange(
+          name,
+          selectedFields.filter((v) => v !== val)
+        );
+      } else {
+        setSelectedFields((prev) => [...prev, val]);
+        onFormChange(name, [...selectedFields, val]);
+      }
+    };
+
+    return (
+      <div>
+        <p className="mb-1 font-medium">
+          <label htmlFor={id} className="cursor-pointer">
+            {field.name}
+          </label>
+        </p>
+        {field.optionsForCheckBox?.map((val, ind) => {
+          return (
+            <div className="flex items-center gap-2" key={ind}>
+              <Input
+                key={ind}
+                id={ind + ""}
+                type="checkbox"
+                name={field.name}
+                className="w-3 h-3 accent-blue-600"
+                onClick={() => onCheckBoxChanged(field.name, val)}
+              />
+              <label htmlFor={ind + ""}>{val}</label>
+            </div>
+          );
+        })}
       </div>
     );
   }

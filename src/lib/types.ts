@@ -5,8 +5,10 @@ export type FieldType = {
   placeholder?: string;
   optionsForSelect?: string[];
   optionsForRadio?: string[];
-  // sectionName: string;
-  // parentSection: null | SectionType;
+  acceptedFileTypes: string[];
+  optionsForCheckBox?: string[];
+  parentSection?: null | SectionType;
+  checkboxLabel?: string;
 };
 
 export type SectionType = {

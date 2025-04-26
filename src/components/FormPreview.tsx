@@ -7,16 +7,15 @@ export default function FormPreview() {
   const fields = useFieldStore((states) => states.fields);
   const [form, setForm] = useState<any>(null);
 
-  function onFormChange(key: string, value: string) {
+  function onFormChange(key: string, value: string | string[]) {
     setForm(() => ({ ...form, [key]: value }));
   }
 
   function onSubmittingForm(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log(form);
+    console.log("form fields are: ", form);
   }
 
-  console.log(fields);
   return (
     <section className="max-w-[600px] px-3 py-4 border-gray-200 border-2 rounded-2xl w-full">
       <h2 className="text-3xl mb-3 font-bold ">Form Preview</h2>

@@ -11,7 +11,7 @@ import { Button } from "./ui/button";
 import { FormEvent, useState } from "react";
 import ErrorText from "./ErrorText";
 import { useFieldStore } from "@/store/fieldStore";
-import { Cross, X } from "lucide-react";
+import { Cross, X, Upload } from "lucide-react";
 
 const INPUT_AVAILABLE_OPTIONS = [
   "Text Field",
@@ -21,6 +21,16 @@ const INPUT_AVAILABLE_OPTIONS = [
   "Check Box",
   "Country",
   "Date picker"
+];
+
+const AVAILABLE_FILE_TYPES = [
+  { label: "PDF Documents", value: ".pdf" },
+  { label: "Word Documents", value: ".doc,.docx" },
+  { label: "Excel Spreadsheets", value: ".xls,.xlsx" },
+  { label: "Images", value: ".jpg,.jpeg,.png,.gif" },
+  { label: "Text Files", value: ".txt" },
+  { label: "CSV Files", value: ".csv" },
+  { label: "ZIP Archives", value: ".zip" }
 ];
 
 const InputForm = () => {
@@ -38,6 +48,13 @@ const InputForm = () => {
   const [selectOption, setSelectOption] = useState("");
   const [selectOptionError, setSelectOptionError] = useState("");
   const [selectOptions, setSelectOptions] = useState<string[]>([]);
+
+  const [acceptedFileTypes, setAcceptedFileTypes] = useState<string[]>([]);
+  const [fileTypeError, setFileTypeError] = useState("");
+
+  const [checkBoxOption, setCheckBoxOption] = useState("");
+  const [checkBoxOptionError, setCheckBoxOptionError] = useState("");
+  const [checkBoxOptions, setCheckBoxOptions] = useState<string[]>([]);
 
   const onFormSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,6 +75,18 @@ const InputForm = () => {
         return;
       }
     }
+    if (fieldType === "File Upload") {
+      if (acceptedFileTypes.length === 0) {
+        setFileTypeError("At least one file type is required");
+        return;
+      }
+    }
+    if (fieldType === "Check Box") {
+      if (checkBoxOptions.length === 0) {
+        setCheckBoxOptionError("At least one option is required");
+        return;
+      }
+    }
 
     console.log(fieldType, fieldName, isRequired, selectOptions);
     addField({
@@ -66,22 +95,31 @@ const InputForm = () => {
       required: isRequired,
       placeholder,
       optionsForRadio: radioOptions,
-      optionsForSelect: selectOptions
+      optionsForSelect: selectOptions,
+      acceptedFileTypes: acceptedFileTypes,
+      optionsForCheckBox: checkBoxOptions
     });
 
     setFieldName("");
     setIsRequired(false);
     setPlaceholder("");
     setFieldType(INPUT_AVAILABLE_OPTIONS[0]);
+    setAcceptedFileTypes([]);
+    setCheckBoxOption("");
+    setRadioOption("");
   };
 
-  function addOption(optionType: "select" | "radio") {
+  function addOption(optionType: "select" | "radio" | "checkbox") {
     if (optionType === "radio" && radioOption === "") {
       setRadioOptionError("Option is required");
       return;
     }
     if (optionType === "select" && selectOption === "") {
       setSelectOptionError("Option is required");
+      return;
+    }
+    if (optionType === "checkbox" && checkBoxOption === "") {
+      setCheckBoxOptionError("Option is required");
       return;
     }
 
@@ -93,7 +131,6 @@ const InputForm = () => {
       setRadioOptions(() => [...radioOptions, radioOption]);
       return;
     }
-
     if (optionType === "select") {
       if (selectOptions.some((val) => val === selectOption)) {
         setSelectOptionError("Option already exists");
@@ -102,9 +139,20 @@ const InputForm = () => {
       setSelectOptions(() => [...selectOptions, selectOption]);
       return;
     }
+    if (optionType === "checkbox") {
+      if (checkBoxOptions.some((val) => val === checkBoxOption)) {
+        setCheckBoxOptionError("Option already exists");
+        return;
+      }
+      setCheckBoxOptions(() => [...checkBoxOptions, checkBoxOption]);
+      return;
+    }
   }
 
-  function removeOption(optionType: "select" | "radio", opt: string) {
+  function removeOption(
+    optionType: "select" | "radio" | "checkbox",
+    opt: string
+  ) {
     if (optionType === "radio") {
       const filtered = radioOptions.filter((val) => val !== opt);
       setRadioOptions(filtered);
@@ -113,7 +161,22 @@ const InputForm = () => {
       const filtered = selectOptions.filter((val) => val !== opt);
       setSelectOptions(filtered);
     }
+    if (optionType === "checkbox") {
+      const filtered = checkBoxOptions.filter((val) => val !== opt);
+      setCheckBoxOptions(filtered);
+    }
   }
+
+  const handleFileTypeChange = (fileType: string) => {
+    setFileTypeError("");
+    if (acceptedFileTypes.includes(fileType)) {
+      setAcceptedFileTypes(
+        acceptedFileTypes.filter((type) => type !== fileType)
+      );
+    } else {
+      setAcceptedFileTypes([...acceptedFileTypes, fileType]);
+    }
+  };
 
   return (
     <form onSubmit={onFormSubmit} className="flex flex-col gap-2">
@@ -274,6 +337,81 @@ const InputForm = () => {
                 <p className="w-full">{opt}</p>
                 <X
                   onClick={() => removeOption("select", opt)}
+                  className=" cursor-pointer"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Input Fields for File Upload */}
+      {fieldType === "File Upload" && (
+        <div>
+          <p className="mb-1 font-medium">
+            <label className="cursor-pointer">Accepted File Types</label>
+          </p>
+          <div className="flex flex-col gap-2">
+            {AVAILABLE_FILE_TYPES.map((fileType, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  type="checkbox"
+                  id={`file-type-${index}`}
+                  className="w-4 h-4 cursor-pointer"
+                  checked={acceptedFileTypes.includes(fileType.value)}
+                  onChange={() => handleFileTypeChange(fileType.value)}
+                />
+                <label
+                  htmlFor={`file-type-${index}`}
+                  className="cursor-pointer"
+                >
+                  {fileType.label} ({fileType.value})
+                </label>
+              </div>
+            ))}
+          </div>
+          <ErrorText text={fileTypeError} />
+        </div>
+      )}
+
+      {/* Input Fields for Checkbox */}
+      {fieldType === "Check Box" && (
+        <div>
+          <p className="mb-1 font-medium">
+            <label htmlFor="creator_check_options" className="cursor-pointer">
+              Options
+            </label>
+          </p>
+          <div className="flex gap-2">
+            <Input
+              id="creator_check_options"
+              type="text"
+              className="w-full"
+              placeholder="Enter options"
+              value={checkBoxOption}
+              onChange={(e) => {
+                setCheckBoxOptionError("");
+                setCheckBoxOption(e.target.value);
+              }}
+            />
+            <Button
+              className="w-fit cursor-pointer"
+              onClick={() => addOption("checkbox")}
+              type={"button"}
+            >
+              Add +
+            </Button>
+          </div>
+          <ErrorText text={checkBoxOptionError} />
+          <div className="flex flex-col gap-1 mt-1">
+            {checkBoxOptions.map((opt, ind) => (
+              <div
+                key={ind}
+                className="flex w-full px-4 py-1 bg-gray-200 rounded-sm"
+              >
+                <p className="w-full">{opt}</p>
+                <X
+                  onClick={() => removeOption("checkbox", opt)}
                   className=" cursor-pointer"
                 />
               </div>
